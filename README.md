@@ -32,6 +32,10 @@ so the exceptions are more descriptive and to avoid stack traces in responses
 
 ## How-To Guides
 
+### OpenApi / Swagger UI
+You can reach the OpenApi documentation via web browser opening the following URL:
+http://localhost:8080/swagger-ui/index.html
+
 ### API Quick Tests
 
 You can test the API using provided ./request.http file in IntelliJ or using curl like in the example below.
