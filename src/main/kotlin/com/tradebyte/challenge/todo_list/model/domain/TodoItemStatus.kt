@@ -1,21 +1,21 @@
 package com.tradebyte.challenge.todo_list.model.domain
 
-enum class TodoItemStatus(val value: String) {
-    NOT_DONE("not done") {
+enum class TodoItemStatus {
+    NOT_DONE {
         override fun canTransitionTo(target: TodoItemStatus): Boolean =
             when (target) {
                 DONE, PAST_DUE -> true
                 else -> false
             }
     },
-    DONE("done") {
+    DONE {
         override fun canTransitionTo(target: TodoItemStatus): Boolean =
             when (target) {
                 NOT_DONE -> true
                 else -> false
             }
     },
-    PAST_DUE("past due") {
+    PAST_DUE {
         override fun canTransitionTo(target: TodoItemStatus): Boolean = false
     };
 

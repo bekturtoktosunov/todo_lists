@@ -1,12 +1,13 @@
 package com.tradebyte.challenge.todo_list.model.domain
 
-import kotlin.time.Clock
-import kotlin.time.Instant
+import java.util.UUID
+import java.time.Instant
 
 data class TodoItem(
+    val id: UUID = UUID.randomUUID(),
     val description: String,
-    val status: TodoItemStatus,
-    val creationDateTime: Instant = Clock.System.now(),
+    val status: TodoItemStatus = TodoItemStatus.NOT_DONE,
+    val creationDateTime: Instant = Instant.now(),
     val dueDateTime: Instant,
-    val doneDateTime: Instant? = null,
+    val doneDateTime: Instant? = null
 )
