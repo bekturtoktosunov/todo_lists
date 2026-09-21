@@ -1,6 +1,7 @@
 package com.tradebyte.challenge.todo_list.controller
 
 import com.tradebyte.challenge.todo_list.config.TodoTestConfig
+import com.tradebyte.challenge.todo_list.exception.ApiErrorCode
 import com.tradebyte.challenge.todo_list.exception.TodoItemNotFoundException
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
@@ -63,6 +64,8 @@ class TodoControllerTest {
                 .content(request)
         ) // Then
             .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.VALIDATION_FAILED.name))
+            .andExpect(jsonPath("$.errors.description").exists())
     }
 
     @Test
@@ -77,6 +80,8 @@ class TodoControllerTest {
                 .content(request)
         ) // Then
             .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.VALIDATION_FAILED.name))
+            .andExpect(jsonPath("$.errors.description").exists())
     }
 
     @Test
@@ -141,6 +146,8 @@ class TodoControllerTest {
                 .content(request)
         ) // Then
             .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.VALIDATION_FAILED.name))
+            .andExpect(jsonPath("$.errors.description").exists())
     }
 
     @Test
@@ -156,6 +163,8 @@ class TodoControllerTest {
                 .content(request)
         ) // Then
             .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.VALIDATION_FAILED.name))
+            .andExpect(jsonPath("$.errors.description").exists())
     }
 
     private fun buildValidCreateRequest() =
@@ -189,8 +198,8 @@ class TodoControllerTest {
     private fun buildCreateRequestWithTooLongDescription() =
         """
             {
-                "description": "$TOO_LONG_DESCRIPTION",
-                "dueDateTime": "2039-09-09T09:09:09Z"
+                "description": "${generateLongString()}",
+                "due_datetime": "2039-09-09T09:09:09Z"
             }
         """.trimIndent()
 
@@ -211,24 +220,13 @@ class TodoControllerTest {
     private fun buildUpdateDescriptionRequestTooLong() =
         """
             {
-                "description": "$TOO_LONG_DESCRIPTION"
+                "description": "${generateLongString()}"
             }
         """.trimIndent()
 
     companion object {
         const val BASE_URL = "/todo-list/v1/items"
-        const val TOO_LONG_DESCRIPTION =
-            """Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
-        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo
-        duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
-        amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt
-        ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
-        et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-        Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut
-        labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
-        et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
 
-        Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat,
-        vel illum dolore eu feu"""
+        fun generateLongString() = "a".repeat(1001)
     }
 }

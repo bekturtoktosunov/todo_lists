@@ -54,8 +54,8 @@ class TodoServiceTest {
     @Test
     fun `should find item by id and return result`() {
         // Given
-        val id = UUID.randomUUID()
         val itemEntity = buildValidNotDoneItem().toEntity()
+        val id = itemEntity.id
         whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
 
         // When
@@ -84,14 +84,16 @@ class TodoServiceTest {
         val itemEntity = buildValidNotDoneItem().toEntity()
         val id = itemEntity.id
         whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+        val newDescription = "new description"
 
         // When
-        val result = service.updateDescription(id, "new description")
+        val result = service.updateDescription(id, newDescription)
 
         // Then
         verify(repository).findById(id)
         assertEquals(itemEntity.id, result.id)
-        assertEquals(itemEntity.description, result.description)
+        assertEquals(newDescription, itemEntity.description)
+        assertEquals(newDescription, result.description)
     }
 
     @Test
@@ -109,9 +111,9 @@ class TodoServiceTest {
     @Test
     fun `should throw TodoItemNotModifiableException when updating item with state PAST_DUE`() {
         // Given
-        val id = UUID.randomUUID()
         val itemWithDueDate = buildPastDueItem()
         val itemEntity = itemWithDueDate.toEntity()
+        val id = itemEntity.id
         whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
 
         // When & Then
@@ -149,7 +151,7 @@ class TodoServiceTest {
             description = "Some description",
             status = TodoItemStatus.PAST_DUE,
             creationDateTime = now.minus(2, ChronoUnit.DAYS),
-            dueDateTime = now.plus(1, ChronoUnit.DAYS),
+            dueDateTime = now.minus(1, ChronoUnit.DAYS),
         )
     }
 

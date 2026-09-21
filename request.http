@@ -50,6 +50,9 @@ Content-Type: application/json
 }
 
 ### Update item description not found
-GET {{baseUrl}}/items/123e4567-e89b-12d3-a456-426614174000
+PATCH {{baseUrl}}/items/123e4567-e89b-12d3-a456-426614174000
 Content-Type: application/json
 
+{
+  "description": "new description"
+}
