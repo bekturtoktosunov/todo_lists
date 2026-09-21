@@ -1,5 +1,6 @@
 package com.tradebyte.challenge.todo_list.service
 
+import com.tradebyte.challenge.todo_list.exception.TodoItemNotFoundException
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
 import com.tradebyte.challenge.todo_list.model.entity.toEntity
@@ -14,6 +15,7 @@ import java.time.ZoneOffset
 import java.time.Clock
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.Optional
 import java.util.UUID
 
 class TodoServiceTest {
@@ -45,6 +47,33 @@ class TodoServiceTest {
         // When Then
         assertThrows(IllegalStateException::class.java) {
             service.create(item)
+        }
+    }
+
+    @Test
+    fun `should find item by id and return result`() {
+        // Given
+        val id = UUID.randomUUID()
+        val itemEntity = createValidItem().toEntity()
+        whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+
+        // When
+        val found = service.find(id)
+
+        // Then
+        verify(repository).findById(id)
+        assertEquals(itemEntity.id, found.id)
+    }
+
+    @Test
+    fun `should throw TodoItemNotFoundException when item not found`() {
+        // Given
+        val id = UUID.randomUUID()
+        whenever(repository.findById(id)).thenReturn(Optional.empty())
+
+        // When & Then
+        assertThrows(TodoItemNotFoundException::class.java) {
+            service.find(id)
         }
     }
 

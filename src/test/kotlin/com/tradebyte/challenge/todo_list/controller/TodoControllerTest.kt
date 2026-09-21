@@ -1,6 +1,7 @@
 package com.tradebyte.challenge.todo_list.controller
 
 import com.tradebyte.challenge.todo_list.config.TodoTestConfig
+import com.tradebyte.challenge.todo_list.exception.TodoItemNotFoundException
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
 import com.tradebyte.challenge.todo_list.service.TodoService
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -38,7 +40,7 @@ class TodoControllerTest {
 
         // When
         mvc.perform(
-            post("/todo-list/v1/items")
+            post(BASE_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request)
         ) // Then
@@ -55,7 +57,7 @@ class TodoControllerTest {
 
         // When
         mvc.perform(
-            post("/todo-list/v1/items")
+            post(BASE_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request)
         ) // Then
@@ -69,11 +71,40 @@ class TodoControllerTest {
 
         // When
         mvc.perform(
-            post("/todo-list/v1/items")
+            post(BASE_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request)
         ) // Then
             .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `should find todo list item`() {
+        // Given
+        val id = UUID.randomUUID()
+        val mockedResponse = createMockedResponse(id)
+        whenever(service.find(id)).thenReturn(mockedResponse)
+
+        // When
+        mvc.perform(
+            get("$BASE_URL/$id")
+        ) // Then
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(id.toString()))
+    }
+
+    @Test
+    fun `should throw exception when item not found`() {
+        // Given
+        val id = UUID.randomUUID()
+        whenever(service.find(id)).thenThrow(TodoItemNotFoundException(id))
+
+        // When
+        mvc.perform(
+            get("$BASE_URL/$id")
+        ) // Then
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.detail").value("Todo list item with id $id not found"))
     }
 
     private fun createValidRequest() =
@@ -84,9 +115,9 @@ class TodoControllerTest {
             }
         """.trimIndent()
 
-    private fun createMockedResponse() =
+    private fun createMockedResponse(id: UUID = UUID.randomUUID()) =
         TodoItem(
-            id = UUID.randomUUID(),
+            id = id,
             description = "testDescription",
             creationDateTime = Instant.parse("2027-07-07T07:07:07Z"),
             dueDateTime = Instant.parse("2039-09-09T09:09:09Z"),
@@ -119,4 +150,8 @@ class TodoControllerTest {
                 "dueDateTime": "2039-09-09T09:09:09Z"
             }
         """.trimIndent()
+
+    companion object {
+        const val BASE_URL = "/todo-list/v1/items"
+    }
 }
