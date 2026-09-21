@@ -40,3 +40,19 @@ Content-Type: application/json
 ### Find item not found
 GET {{baseUrl}}/items/123e4567-e89b-12d3-a456-426614174000
 Content-Type: application/json
+
+### Update item description
+PATCH {{baseUrl}}/items/{{todoId}}
+Content-Type: application/json
+
+{
+  "description": "new description"
+}
+
+### Update item description not found
+PATCH {{baseUrl}}/items/123e4567-e89b-12d3-a456-426614174000
+Content-Type: application/json
+
+{
+  "description": "new description"
+}

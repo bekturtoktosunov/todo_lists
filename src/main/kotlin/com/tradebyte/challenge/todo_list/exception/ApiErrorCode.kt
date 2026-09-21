@@ -1,0 +1,8 @@
+package com.tradebyte.challenge.todo_list.exception
+
+enum class ApiErrorCode {
+    TODO_ITEM_NOT_FOUND,
+    TODO_ITEM_IMMUTABLE,
+    CONCURRENT_MODIFICATION,
+    VALIDATION_FAILED
+}

@@ -15,4 +15,4 @@ spring:
 
   h2:
     console:
-      enable: true
+      enabled: true

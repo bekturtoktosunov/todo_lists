@@ -1,6 +1,7 @@
 package com.tradebyte.challenge.todo_list.controller
 
 import com.tradebyte.challenge.todo_list.config.TodoTestConfig
+import com.tradebyte.challenge.todo_list.exception.ApiErrorCode
 import com.tradebyte.challenge.todo_list.exception.TodoItemNotFoundException
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
@@ -15,6 +16,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -34,7 +36,7 @@ class TodoControllerTest {
     @Test
     fun `should create todo list item`() {
         // Given
-        val request = createValidRequest()
+        val request = buildValidCreateRequest()
         val mockedResponse = createMockedResponse()
         whenever(service.create(any())).thenReturn(mockedResponse)
 
@@ -53,7 +55,7 @@ class TodoControllerTest {
     @Test
     fun `should throw exception when description is blank`() {
         // Given
-        val request = createRequestWithBlankDescription()
+        val request = buildCreateRequestWithBlankDescription()
 
         // When
         mvc.perform(
@@ -62,12 +64,14 @@ class TodoControllerTest {
                 .content(request)
         ) // Then
             .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.VALIDATION_FAILED.name))
+            .andExpect(jsonPath("$.errors.description").exists())
     }
 
     @Test
     fun `should throw exception when description is too long`() {
         // Given
-        val request = createRequestWithTooLongDescription()
+        val request = buildCreateRequestWithTooLongDescription()
 
         // When
         mvc.perform(
@@ -76,6 +80,8 @@ class TodoControllerTest {
                 .content(request)
         ) // Then
             .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.VALIDATION_FAILED.name))
+            .andExpect(jsonPath("$.errors.description").exists())
     }
 
     @Test
@@ -107,7 +113,61 @@ class TodoControllerTest {
             .andExpect(jsonPath("$.detail").value("Todo list item with id $id not found"))
     }
 
-    private fun createValidRequest() =
+    @Test
+    fun `should update item description and return item`() {
+        // Given
+        val id = UUID.randomUUID()
+        val newDescription = "new description"
+        val request = buildValidUpdateDescriptionRequest(newDescription)
+        val mockedResponse = createMockedResponse(id, description = newDescription)
+        whenever(service.updateDescription(id, newDescription)).thenReturn(mockedResponse)
+
+        // When
+        mvc.perform(
+            patch("$BASE_URL/$id")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request)
+        ) // Then
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(id.toString()))
+            .andExpect(jsonPath("$.description").value(newDescription))
+    }
+
+    @Test
+    fun `should throw exception when description to update is blank`() {
+        // Given
+        val id = UUID.randomUUID()
+        val request = buildUpdateDescriptionRequestBlank()
+
+        // When
+        mvc.perform(
+            patch("$BASE_URL/$id")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request)
+        ) // Then
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.VALIDATION_FAILED.name))
+            .andExpect(jsonPath("$.errors.description").exists())
+    }
+
+    @Test
+    fun `should throw exception when description to update is too long`() {
+        // Given
+        val id = UUID.randomUUID()
+        val request = buildUpdateDescriptionRequestTooLong()
+
+        // When
+        mvc.perform(
+            patch("$BASE_URL/$id")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request)
+        ) // Then
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.VALIDATION_FAILED.name))
+            .andExpect(jsonPath("$.errors.description").exists())
+    }
+
+    private fun buildValidCreateRequest() =
         """
             {
                 "description": "testDescription",
@@ -115,16 +175,19 @@ class TodoControllerTest {
             }
         """.trimIndent()
 
-    private fun createMockedResponse(id: UUID = UUID.randomUUID()) =
+    private fun createMockedResponse(
+        id: UUID = UUID.randomUUID(),
+        description: String = "testDescription"
+    ) =
         TodoItem(
             id = id,
-            description = "testDescription",
+            description = description,
             creationDateTime = Instant.parse("2027-07-07T07:07:07Z"),
             dueDateTime = Instant.parse("2039-09-09T09:09:09Z"),
             status = TodoItemStatus.NOT_DONE
         )
 
-    private fun createRequestWithBlankDescription() =
+    private fun buildCreateRequestWithBlankDescription() =
         """
             {
                 "description": "",
@@ -132,26 +195,38 @@ class TodoControllerTest {
             }
         """.trimIndent()
 
-    private fun createRequestWithTooLongDescription() =
+    private fun buildCreateRequestWithTooLongDescription() =
         """
             {
-                "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
-                invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo 
-                duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit 
-                amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt 
-                ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores 
-                et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. 
-                Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut 
-                labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores 
-                et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+                "description": "${generateLongString()}",
+                "due_datetime": "2039-09-09T09:09:09Z"
+            }
+        """.trimIndent()
 
-                Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, 
-                vel illum dolore eu feu",
-                "dueDateTime": "2039-09-09T09:09:09Z"
+    private fun buildValidUpdateDescriptionRequest(newDescription: String) =
+        """
+            {
+                "description": "$newDescription"
+            }
+        """.trimIndent()
+
+    private fun buildUpdateDescriptionRequestBlank() =
+        """
+            {
+                "description": ""
+            }
+        """.trimIndent()
+
+    private fun buildUpdateDescriptionRequestTooLong() =
+        """
+            {
+                "description": "${generateLongString()}"
             }
         """.trimIndent()
 
     companion object {
         const val BASE_URL = "/todo-list/v1/items"
+
+        fun generateLongString() = "a".repeat(1001)
     }
 }
