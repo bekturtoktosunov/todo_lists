@@ -1,0 +1,28 @@
+@baseUrl = http://localhost:8080/todo-list/v1
+
+### Create new todo list item
+POST {{baseUrl}}/items
+Content-Type: application/json
+
+{
+  "description": "testDescription",
+  "due_datetime": "2039-09-09T09:09:09Z"
+}
+
+### Create new item with invalid due datetime
+POST {{baseUrl}}/items
+Content-Type: application/json
+
+{
+  "description": "testDescription",
+  "due_datetime": "2019-09-09T09:09:09Z"
+}
+
+### Create new item with blank description
+POST {{baseUrl}}/items
+Content-Type: application/json
+
+{
+  "description": "  ",
+  "due_datetime": "2019-09-09T09:09:09Z"
+}
