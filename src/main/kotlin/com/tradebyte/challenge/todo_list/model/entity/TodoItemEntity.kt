@@ -6,6 +6,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
+import jakarta.persistence.Version
 import java.util.UUID
 import java.time.Instant
 
@@ -19,5 +20,7 @@ class TodoItemEntity(
     var status: TodoItemStatus,
     var creationDateTime: Instant,
     var dueDateTime: Instant,
-    var doneDateTime: Instant? = null
+    var doneDateTime: Instant? = null,
+    @Version
+    var version: Long = 0
 )

@@ -7,6 +7,7 @@ import com.tradebyte.challenge.todo_list.model.entity.toEntity
 import com.tradebyte.challenge.todo_list.repository.TodoJpaRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.util.UUID
 
@@ -32,10 +33,24 @@ class TodoService(
     }
 
     /**
-     *
+     * Finds existing todo list item
+     * Throws: TodoItemNotFoundException when no item with given id found
      */
     fun find(id: UUID): TodoItem =
         repository.findByIdOrNull(id)
             ?.toDomain()
             ?: throw TodoItemNotFoundException(id)
+
+    /**
+     * Updates description of todo list item
+     * Throws: TodoItemNotFoundException when no item with given id found
+     */
+    @Transactional
+    fun updateDescription(id: UUID, newDescription: String): TodoItem {
+        val itemEntity = repository.findByIdOrNull(id) ?: throw TodoItemNotFoundException(id)
+
+        itemEntity.description = newDescription
+
+        return itemEntity.toDomain()
+    }
 }

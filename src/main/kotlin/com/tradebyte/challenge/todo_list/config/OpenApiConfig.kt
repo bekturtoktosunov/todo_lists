@@ -9,6 +9,7 @@ import io.swagger.v3.oas.models.media.IntegerSchema
 import io.swagger.v3.oas.models.media.MapSchema
 import io.swagger.v3.oas.models.media.MediaType
 import io.swagger.v3.oas.models.media.ObjectSchema
+import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.media.StringSchema
 import io.swagger.v3.oas.models.responses.ApiResponse
 import org.springframework.context.annotation.Bean
@@ -35,10 +36,9 @@ class OpenApiConfig {
                         .content(
                             Content().addMediaType(
                                 "application/problem+json",
-                                MediaType().schema(problemDetailSchema)
+                                MediaType().schema(problemDetailSchema(includeValidationErrors = true))
                             )
                         )
-
                 )
                 .addResponses(
                     "NotFound",
@@ -51,21 +51,40 @@ class OpenApiConfig {
                             )
                         )
                 )
+                .addResponses(
+                    "ConcurrentModificationConflict",
+                    ApiResponse()
+                        .description("Todo item was modified concurrently")
+                        .content(
+                            Content().addMediaType(
+                                "application/problem+json",
+                                MediaType().schema(problemDetailSchema())
+                            )
+                        )
+                )
         )
     }
 
     companion object {
-        private fun problemDetailSchema() =
-            ObjectSchema()
+        private fun problemDetailSchema(includeValidationErrors: Boolean = false): Schema<*>? {
+            val schema = ObjectSchema()
                 .addProperty("type", StringSchema().format("uri"))
                 .addProperty("title", StringSchema())
                 .addProperty("status", IntegerSchema().format("int32"))
                 .addProperty("detail", StringSchema())
                 .addProperty("instance", StringSchema().format("uri"))
                 .addProperty("timestamp", StringSchema().format("date-time"))
-                .addProperty(
+
+            if (includeValidationErrors) {
+                schema.addProperty(
                     "errors",
-                    MapSchema().additionalProperties(StringSchema())
+                    MapSchema()
+                        .additionalProperties(StringSchema())
+                        .description("Validation messages keyed by field name")
                 )
+            }
+
+            return schema
+        }
     }
 }

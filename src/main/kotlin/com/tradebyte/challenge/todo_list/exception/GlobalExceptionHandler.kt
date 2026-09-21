@@ -1,5 +1,6 @@
 package com.tradebyte.challenge.todo_list.exception
 
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -38,6 +39,14 @@ class GlobalExceptionHandler(private val clock: Clock) {
             status = HttpStatus.NOT_FOUND,
             title = "Not Found",
             detail = "Todo list item with id ${exception.itemId} not found",
+        )
+
+    @ExceptionHandler(OptimisticLockingFailureException::class)
+    fun handleOptimisticLock(): ProblemDetail =
+        problemDetail(
+            status = HttpStatus.CONFLICT,
+            title = "Conflict",
+            detail = "Todo list item was modified concurrently. Reload it and try again",
         )
 
     private fun problemDetail(

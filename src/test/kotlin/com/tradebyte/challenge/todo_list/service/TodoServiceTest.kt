@@ -77,6 +77,34 @@ class TodoServiceTest {
         }
     }
 
+    @Test
+    fun `should update item description and return result`() {
+        // Given
+        val itemEntity = createValidItem().toEntity()
+        val id = itemEntity.id
+        whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+
+        // When
+        val result = service.updateDescription(id, "new description")
+
+        // Then
+        verify(repository).findById(id)
+        assertEquals(itemEntity.id, result.id)
+        assertEquals(itemEntity.description, result.description)
+    }
+
+    @Test
+    fun `should throw TodoItemNotFoundException when item not found by description update`() {
+        // Given
+        val id = UUID.randomUUID()
+        whenever(repository.findById(id)).thenReturn(Optional.empty())
+
+        // When & Then
+        assertThrows(TodoItemNotFoundException::class.java) {
+            service.updateDescription(id, "new description")
+        }
+    }
+
     private fun createValidItem(): TodoItem {
         val now = Instant.now(clock)
         return TodoItem(
