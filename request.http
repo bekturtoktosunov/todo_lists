@@ -6,7 +6,7 @@ Content-Type: application/json
 
 {
   "description": "testDescription",
-  "dueDateTime": "2039-09-09T09:09:09Z"
+  "due_datetime": "2039-09-09T09:09:09Z"
 }
 
 ### Create new item with invalid due datetime
@@ -15,7 +15,7 @@ Content-Type: application/json
 
 {
   "description": "testDescription",
-  "dueDateTime": "2019-09-09T09:09:09Z"
+  "due_datetime": "2019-09-09T09:09:09Z"
 }
 
 ### Create new item with blank description
@@ -24,5 +24,5 @@ Content-Type: application/json
 
 {
   "description": "  ",
-  "dueDateTime": "2019-09-09T09:09:09Z"
+  "due_datetime": "2019-09-09T09:09:09Z"
 }

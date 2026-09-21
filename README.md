@@ -45,7 +45,7 @@ curl --request POST 'http://localhost:8080/todo-list/v1/items' \
 --header 'Content-Type: application/json' \
 --data '{
 "description": "Finish coding challenge",
-"dueDateTime": "2026-09-22T00:00:00Z"
+"due_datetime": "2026-09-22T00:00:00Z"
 }'
 ```
 

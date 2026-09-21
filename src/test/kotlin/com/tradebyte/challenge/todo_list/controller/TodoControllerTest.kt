@@ -80,7 +80,7 @@ class TodoControllerTest {
         """
             {
                 "description": "testDescription",
-                "dueDateTime": "2039-09-09T09:09:09Z"
+                "due_datetime": "2039-09-09T09:09:09Z"
             }
         """.trimIndent()
 
@@ -97,7 +97,7 @@ class TodoControllerTest {
         """
             {
                 "description": "",
-                "dueDateTime": "2039-09-09T09:09:09Z"
+                "due_datetime": "2039-09-09T09:09:09Z"
             }
         """.trimIndent()
 
