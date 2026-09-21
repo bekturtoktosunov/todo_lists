@@ -1,5 +1,6 @@
 package com.tradebyte.challenge.todo_list.config
 
+import com.tradebyte.challenge.todo_list.exception.ApiErrorCode
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.models.Components
@@ -52,9 +53,9 @@ class OpenApiConfig {
                         )
                 )
                 .addResponses(
-                    "ConcurrentModificationConflict",
+                    "ItemUpdateConflict",
                     ApiResponse()
-                        .description("Todo item was modified concurrently")
+                        .description("The item is past due and cannot be modified, or it was modified concurrently.")
                         .content(
                             Content().addMediaType(
                                 "application/problem+json",
@@ -74,12 +75,20 @@ class OpenApiConfig {
                 .addProperty("detail", StringSchema())
                 .addProperty("instance", StringSchema().format("uri"))
                 .addProperty("timestamp", StringSchema().format("date-time"))
+                .addProperty(
+                    "error_code",
+                    StringSchema().apply {
+                        description = "Machine-readable error code"
+                        enum = ApiErrorCode.entries.map { it.name }
+                        example = ApiErrorCode.TODO_ITEM_IMMUTABLE.name
+                    }
+                )
 
             if (includeValidationErrors) {
                 schema.addProperty(
                     "errors",
                     MapSchema()
-                        .additionalProperties(StringSchema())
+                        .additionalProperties(true)
                         .description("Validation messages keyed by field name")
                 )
             }

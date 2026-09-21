@@ -78,7 +78,7 @@ interface TodoApi {
             ),
             ApiResponse(
                 responseCode = "409",
-                ref = "#/components/responses/ConcurrentModificationConflict"
+                ref = "#/components/responses/ItemUpdateConflict"
             )
         ]
     )

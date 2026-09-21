@@ -1,6 +1,7 @@
 package com.tradebyte.challenge.todo_list.service
 
 import com.tradebyte.challenge.todo_list.exception.TodoItemNotFoundException
+import com.tradebyte.challenge.todo_list.exception.TodoItemNotModifiableException
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
 import com.tradebyte.challenge.todo_list.model.entity.toEntity
@@ -27,7 +28,7 @@ class TodoServiceTest {
     @Test
     fun `should save item and return result`() {
         // Given
-        val item = createValidItem()
+        val item = buildValidNotDoneItem()
         val itemEntity = item.toEntity()
         whenever(repository.save(any())).thenReturn(itemEntity)
 
@@ -42,7 +43,7 @@ class TodoServiceTest {
     @Test
     fun `should throw IlligalStateException when due date is not in the future`() {
         // Given
-        val item = createItemWithPastDueDateTime()
+        val item = buildNotDoneItemWithPastDueDateTime()
 
         // When Then
         assertThrows(IllegalStateException::class.java) {
@@ -54,7 +55,7 @@ class TodoServiceTest {
     fun `should find item by id and return result`() {
         // Given
         val id = UUID.randomUUID()
-        val itemEntity = createValidItem().toEntity()
+        val itemEntity = buildValidNotDoneItem().toEntity()
         whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
 
         // When
@@ -80,7 +81,7 @@ class TodoServiceTest {
     @Test
     fun `should update item description and return result`() {
         // Given
-        val itemEntity = createValidItem().toEntity()
+        val itemEntity = buildValidNotDoneItem().toEntity()
         val id = itemEntity.id
         whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
 
@@ -105,7 +106,21 @@ class TodoServiceTest {
         }
     }
 
-    private fun createValidItem(): TodoItem {
+    @Test
+    fun `should throw TodoItemNotModifiableException when updating item with state PAST_DUE`() {
+        // Given
+        val id = UUID.randomUUID()
+        val itemWithDueDate = buildPastDueItem()
+        val itemEntity = itemWithDueDate.toEntity()
+        whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+
+        // When & Then
+        assertThrows(TodoItemNotModifiableException::class.java) {
+            service.updateDescription(id, "new description")
+        }
+    }
+
+    private fun buildValidNotDoneItem(): TodoItem {
         val now = Instant.now(clock)
         return TodoItem(
             id = UUID.randomUUID(),
@@ -116,7 +131,7 @@ class TodoServiceTest {
         )
     }
 
-    private fun createItemWithPastDueDateTime(): TodoItem {
+    private fun buildNotDoneItemWithPastDueDateTime(): TodoItem {
         val now = Instant.now(clock)
         return TodoItem(
             id = UUID.randomUUID(),
@@ -124,6 +139,17 @@ class TodoServiceTest {
             status = TodoItemStatus.NOT_DONE,
             creationDateTime = now.minus(2, ChronoUnit.DAYS),
             dueDateTime = now.minus(1, ChronoUnit.DAYS),
+        )
+    }
+
+    private fun buildPastDueItem(): TodoItem {
+        val now = Instant.now(clock)
+        return TodoItem(
+            id = UUID.randomUUID(),
+            description = "Some description",
+            status = TodoItemStatus.PAST_DUE,
+            creationDateTime = now.minus(2, ChronoUnit.DAYS),
+            dueDateTime = now.plus(1, ChronoUnit.DAYS),
         )
     }
 

@@ -20,4 +20,6 @@ enum class TodoItemStatus {
     };
 
     open fun canTransitionTo(target: TodoItemStatus): Boolean = false
+
+    open fun allowsModification(): Boolean = this != PAST_DUE
 }

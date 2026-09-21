@@ -1,6 +1,7 @@
 package com.tradebyte.challenge.todo_list.service
 
 import com.tradebyte.challenge.todo_list.exception.TodoItemNotFoundException
+import com.tradebyte.challenge.todo_list.exception.TodoItemNotModifiableException
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.entity.toDomain
 import com.tradebyte.challenge.todo_list.model.entity.toEntity
@@ -48,6 +49,10 @@ class TodoService(
     @Transactional
     fun updateDescription(id: UUID, newDescription: String): TodoItem {
         val itemEntity = repository.findByIdOrNull(id) ?: throw TodoItemNotFoundException(id)
+
+        if (!itemEntity.status.allowsModification()) {
+            throw TodoItemNotModifiableException(id, "status ${itemEntity.status} doesn't allow changes")
+        }
 
         itemEntity.description = newDescription
 

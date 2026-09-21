@@ -17,6 +17,7 @@ class GlobalExceptionHandler(private val clock: Clock) {
             status = HttpStatus.BAD_REQUEST,
             title = "Bad Request",
             detail = exception.message ?: "Invalid state",
+            errorCode = ApiErrorCode.VALIDATION_FAILED
         )
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
@@ -25,6 +26,7 @@ class GlobalExceptionHandler(private val clock: Clock) {
             status = HttpStatus.BAD_REQUEST,
             title = "Bad Request",
             detail = "Request validation failed",
+            errorCode = ApiErrorCode.VALIDATION_FAILED
         )
         val errors = exception.bindingResult.fieldErrors.associate { fieldError ->
             fieldError.field to (fieldError.defaultMessage ?: "Invalid field value")
@@ -39,6 +41,7 @@ class GlobalExceptionHandler(private val clock: Clock) {
             status = HttpStatus.NOT_FOUND,
             title = "Not Found",
             detail = "Todo list item with id ${exception.itemId} not found",
+            errorCode = ApiErrorCode.TODO_ITEM_NOT_FOUND
         )
 
     @ExceptionHandler(OptimisticLockingFailureException::class)
@@ -47,15 +50,27 @@ class GlobalExceptionHandler(private val clock: Clock) {
             status = HttpStatus.CONFLICT,
             title = "Conflict",
             detail = "Todo list item was modified concurrently. Reload it and try again",
+            errorCode = ApiErrorCode.CONCURRENT_MODIFICATION
+        )
+
+    @ExceptionHandler(TodoItemNotModifiableException::class)
+    fun handleTodoItemNotModifiable(exception: TodoItemNotModifiableException): ProblemDetail =
+        problemDetail(
+            status = HttpStatus.CONFLICT,
+            title = "Conflict",
+            detail = exception.message ?: "Item can't be modified",
+            errorCode = ApiErrorCode.TODO_ITEM_IMMUTABLE
         )
 
     private fun problemDetail(
         status: HttpStatus,
         title: String,
-        detail: String
+        detail: String,
+        errorCode: ApiErrorCode
     ): ProblemDetail {
         val problemDetail = ProblemDetail.forStatusAndDetail(status, detail)
         problemDetail.title = title
+        problemDetail.setProperty("error_code", errorCode)
         problemDetail.setProperty("timestamp", clock.instant())
         return problemDetail
     }
