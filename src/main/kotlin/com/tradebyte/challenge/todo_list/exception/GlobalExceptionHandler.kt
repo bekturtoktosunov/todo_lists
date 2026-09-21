@@ -32,6 +32,14 @@ class GlobalExceptionHandler(private val clock: Clock) {
         return problemDetail
     }
 
+    @ExceptionHandler(TodoItemNotFoundException::class)
+    fun handleTodoItemNotFound(exception: TodoItemNotFoundException): ProblemDetail =
+        problemDetail(
+            status = HttpStatus.NOT_FOUND,
+            title = "Not Found",
+            detail = "Todo list item with id ${exception.itemId} not found",
+        )
+
     private fun problemDetail(
         status: HttpStatus,
         title: String,

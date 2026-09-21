@@ -1,11 +1,14 @@
 package com.tradebyte.challenge.todo_list.service
 
+import com.tradebyte.challenge.todo_list.exception.TodoItemNotFoundException
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.entity.toDomain
 import com.tradebyte.challenge.todo_list.model.entity.toEntity
 import com.tradebyte.challenge.todo_list.repository.TodoJpaRepository
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.Clock
+import java.util.UUID
 
 @Service
 class TodoService(
@@ -27,4 +30,12 @@ class TodoService(
 
         return saved.toDomain()
     }
+
+    /**
+     *
+     */
+    fun find(id: UUID): TodoItem =
+        repository.findByIdOrNull(id)
+            ?.toDomain()
+            ?: throw TodoItemNotFoundException(id)
 }

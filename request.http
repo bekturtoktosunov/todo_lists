@@ -9,6 +9,12 @@ Content-Type: application/json
   "due_datetime": "2039-09-09T09:09:09Z"
 }
 
+> {%
+    if (response.status === 201) {
+        client.global.set("todoId", response.body.id);
+    }
+%}
+
 ### Create new item with invalid due datetime
 POST {{baseUrl}}/items
 Content-Type: application/json
@@ -26,3 +32,11 @@ Content-Type: application/json
   "description": "  ",
   "due_datetime": "2019-09-09T09:09:09Z"
 }
+
+### Find item by id
+GET {{baseUrl}}/items/{{todoId}}
+Content-Type: application/json
+
+### Find item not found
+GET {{baseUrl}}/items/123e4567-e89b-12d3-a456-426614174000
+Content-Type: application/json
