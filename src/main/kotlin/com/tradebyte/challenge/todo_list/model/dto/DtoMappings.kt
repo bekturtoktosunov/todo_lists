@@ -2,8 +2,14 @@ package com.tradebyte.challenge.todo_list.model.dto
 
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
+import java.time.Clock
 
-fun CreateTodoRequest.toDomain(): TodoItem = TodoItem(description = description, dueDateTime = dueDateTime)
+fun CreateTodoRequest.toDomain(clock: Clock): TodoItem =
+    TodoItem(
+        description = description,
+        dueDateTime = dueDateTime,
+        creationDateTime = clock.instant()
+    )
 
 fun TodoItem.toResponse(): TodoResponse =
     TodoResponse(

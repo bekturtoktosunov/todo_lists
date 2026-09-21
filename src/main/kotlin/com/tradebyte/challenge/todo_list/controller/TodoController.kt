@@ -12,15 +12,17 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
+import java.time.Clock
 
 @RestController
 @RequestMapping("/todo-list/v1/items")
 class TodoController(
-    private val service: TodoService
+    private val service: TodoService,
+    private val clock: Clock
 ) {
     @PostMapping
     fun add(@Valid @RequestBody request: CreateTodoRequest): ResponseEntity<TodoResponse> {
-        val item = request.toDomain()
+        val item = request.toDomain(clock)
         val created = service.create(item)
         return ResponseEntity
             .created(URI.create("/todo-list/v1/items/${created.id}"))

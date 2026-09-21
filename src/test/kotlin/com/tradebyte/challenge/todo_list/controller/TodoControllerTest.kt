@@ -1,5 +1,6 @@
 package com.tradebyte.challenge.todo_list.controller
 
+import com.tradebyte.challenge.todo_list.config.TodoTestConfig
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
 import com.tradebyte.challenge.todo_list.service.TodoService
@@ -8,6 +9,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
+import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -19,6 +21,7 @@ import java.time.Instant
 import java.util.UUID
 
 @WebMvcTest(controllers = [TodoController::class])
+@Import(TodoTestConfig::class)
 class TodoControllerTest {
     @Autowired
     lateinit var mvc: MockMvc
@@ -59,6 +62,20 @@ class TodoControllerTest {
             .andExpect(status().isBadRequest)
     }
 
+    @Test
+    fun `should throw exception when description is too long`() {
+        // Given
+        val request = createRequestWithTooLongDescription()
+
+        // When
+        mvc.perform(
+            post("/todo-list/v1/items")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request)
+        ) // Then
+            .andExpect(status().isBadRequest)
+    }
+
     private fun createValidRequest() =
         """
             {
@@ -80,6 +97,25 @@ class TodoControllerTest {
         """
             {
                 "description": "",
+                "dueDateTime": "2039-09-09T09:09:09Z"
+            }
+        """.trimIndent()
+
+    private fun createRequestWithTooLongDescription() =
+        """
+            {
+                "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
+                invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo 
+                duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit 
+                amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt 
+                ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores 
+                et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. 
+                Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut 
+                labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores 
+                et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+
+                Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, 
+                vel illum dolore eu feu",
                 "dueDateTime": "2039-09-09T09:09:09Z"
             }
         """.trimIndent()
