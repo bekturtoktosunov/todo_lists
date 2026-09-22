@@ -1,0 +1,11 @@
+package com.tradebyte.challenge.todolist.exception
+
+enum class ApiErrorCode {
+    TODO_ITEM_NOT_FOUND,
+    TODO_ITEM_IMMUTABLE,
+    CONCURRENT_MODIFICATION,
+    VALIDATION_FAILED,
+    INVALID_STATUS_TRANSITION,
+    INVALID_REQUEST_BODY,
+    INVALID_REQUEST_PARAM,
+}

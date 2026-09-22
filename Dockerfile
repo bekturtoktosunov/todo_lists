@@ -6,6 +6,7 @@ WORKDIR /workspace
 COPY gradlew .
 COPY gradle ./gradle
 COPY build.gradle.kts settings.gradle.kts ./
+COPY .editorconfig ./
 
 RUN chmod +x gradlew
 
