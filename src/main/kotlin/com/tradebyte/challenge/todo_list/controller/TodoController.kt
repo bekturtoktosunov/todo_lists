@@ -1,6 +1,7 @@
 package com.tradebyte.challenge.todo_list.controller
 
 import com.tradebyte.challenge.todo_list.model.dto.request.CreateTodoRequest
+import com.tradebyte.challenge.todo_list.model.dto.request.TodoStatusFilter
 import com.tradebyte.challenge.todo_list.model.dto.response.TodoResponse
 import com.tradebyte.challenge.todo_list.model.dto.request.UpdateTodoDescriptionRequest
 import com.tradebyte.challenge.todo_list.model.dto.request.UpdateTodoStatusRequest
@@ -49,4 +50,9 @@ class TodoController(
         val updatedItem = service.updateStatus(id, targetStatus)
         return updatedItem.toResponse()
     }
+
+    @GetMapping
+    override fun getItems(@RequestParam status: TodoStatusFilter?): List<TodoResponse> =
+        service.findAll(status?.toDomain())
+            .map {it.toResponse()}
 }

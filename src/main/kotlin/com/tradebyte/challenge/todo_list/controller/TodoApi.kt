@@ -1,10 +1,12 @@
 package com.tradebyte.challenge.todo_list.controller
 
 import com.tradebyte.challenge.todo_list.model.dto.request.CreateTodoRequest
+import com.tradebyte.challenge.todo_list.model.dto.request.TodoStatusFilter
 import com.tradebyte.challenge.todo_list.model.dto.response.TodoResponse
 import com.tradebyte.challenge.todo_list.model.dto.request.UpdateTodoDescriptionRequest
 import com.tradebyte.challenge.todo_list.model.dto.request.UpdateTodoStatusRequest
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -47,6 +49,10 @@ interface TodoApi {
                         schema = Schema(implementation = TodoResponse::class)
                     )
                 ]
+            ),
+            ApiResponse(
+                ref = "#/components/responses/BadRequest",
+                responseCode = "400"
             ),
             ApiResponse(
                 ref = "#/components/responses/NotFound",
@@ -113,4 +119,25 @@ interface TodoApi {
         ]
     )
     fun updateItemStatus(id: UUID, request: UpdateTodoStatusRequest): TodoResponse
+
+    @Operation(summary = "Get todo list items")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Items returned",
+                content = [
+                    Content(
+                        mediaType = "application/json",
+                        array = ArraySchema(schema = Schema(implementation = TodoResponse::class))
+                    )
+                ]
+            ),
+            ApiResponse(
+                ref = "#/components/responses/BadRequest",
+                responseCode = "400"
+            )
+        ]
+    )
+    fun getItems(status: TodoStatusFilter?): List<TodoResponse>
 }

@@ -4,6 +4,7 @@ import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
 import com.tradebyte.challenge.todo_list.model.dto.request.CreateTodoRequest
 import com.tradebyte.challenge.todo_list.model.dto.request.EditableTodoStatus
+import com.tradebyte.challenge.todo_list.model.dto.request.TodoStatusFilter
 import com.tradebyte.challenge.todo_list.model.dto.response.TodoResponse
 import com.tradebyte.challenge.todo_list.model.dto.response.TodoStatusResponse
 import java.time.Clock
@@ -34,4 +35,11 @@ fun EditableTodoStatus.toDomain(): TodoItemStatus =
     when (this) {
         EditableTodoStatus.DONE -> TodoItemStatus.DONE
         EditableTodoStatus.NOT_DONE -> TodoItemStatus.NOT_DONE
+    }
+
+fun TodoStatusFilter.toDomain(): TodoItemStatus =
+    when (this) {
+        TodoStatusFilter.DONE -> TodoItemStatus.DONE
+        TodoStatusFilter.NOT_DONE -> TodoItemStatus.NOT_DONE
+        TodoStatusFilter.PAST_DUE -> TodoItemStatus.PAST_DUE
     }
