@@ -29,6 +29,15 @@ clock to make time-dependent behavior deterministic.
 I implemented a small State Machine in TodoItemStatus. It checks if a target state of an item is reachable from the
 current one (NOT_DONE, DONE, PAST_DUE).
 
+#### Status Updates via PUT
+
+I use PUT /todo-list/v1/items/{id}/status to update an item's status, treating it as a subresource.
+The request accepts only "done" and "not done"; "past due" is managed by the service.
+
+The operation is idempotent: requesting the current status leaves the item unchanged.
+Marking an item as done sets done_datetime using the injected Clock; marking it as not done clears it.
+Items with status "past due" cannot be modified.
+
 #### Global Exception Handler
 
 I decided to add GlobalExceptionHandler to have custom exception structure (Problem Detail with extra properties)

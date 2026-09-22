@@ -56,3 +56,19 @@ Content-Type: application/json
 {
   "description": "new description"
 }
+
+### Mark todo item done
+PUT {{baseUrl}}/items/{{todoId}}/status
+Content-Type: application/json
+
+{
+  "status": "done"
+}
+
+### Mark todo item not done
+PUT {{baseUrl}}/items/{{todoId}}/status
+Content-Type: application/json
+
+{
+  "status": "not done"
+}

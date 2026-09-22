@@ -1,8 +1,9 @@
 package com.tradebyte.challenge.todo_list.controller
 
-import com.tradebyte.challenge.todo_list.model.dto.CreateTodoRequest
-import com.tradebyte.challenge.todo_list.model.dto.TodoResponse
-import com.tradebyte.challenge.todo_list.model.dto.UpdateTodoDescriptionRequest
+import com.tradebyte.challenge.todo_list.model.dto.request.CreateTodoRequest
+import com.tradebyte.challenge.todo_list.model.dto.response.TodoResponse
+import com.tradebyte.challenge.todo_list.model.dto.request.UpdateTodoDescriptionRequest
+import com.tradebyte.challenge.todo_list.model.dto.request.UpdateTodoStatusRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -83,4 +84,33 @@ interface TodoApi {
         ]
     )
     fun updateItemDescription(id: UUID, request: UpdateTodoDescriptionRequest): TodoResponse
+
+    @Operation(summary = "Update todo item status")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Status updated",
+                content = [
+                    Content(
+                        mediaType = "application/json",
+                        schema = Schema(implementation = TodoResponse::class)
+                    )
+                ]
+            ),
+            ApiResponse(
+                ref = "#/components/responses/BadRequest",
+                responseCode = "400"
+            ),
+            ApiResponse(
+                ref = "#/components/responses/NotFound",
+                responseCode = "404"
+            ),
+            ApiResponse(
+                responseCode = "409",
+                ref = "#/components/responses/ItemUpdateConflict"
+            )
+        ]
+    )
+    fun updateItemStatus(id: UUID, request: UpdateTodoStatusRequest): TodoResponse
 }

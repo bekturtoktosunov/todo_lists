@@ -1,8 +1,9 @@
 package com.tradebyte.challenge.todo_list.controller
 
-import com.tradebyte.challenge.todo_list.model.dto.CreateTodoRequest
-import com.tradebyte.challenge.todo_list.model.dto.TodoResponse
-import com.tradebyte.challenge.todo_list.model.dto.UpdateTodoDescriptionRequest
+import com.tradebyte.challenge.todo_list.model.dto.request.CreateTodoRequest
+import com.tradebyte.challenge.todo_list.model.dto.response.TodoResponse
+import com.tradebyte.challenge.todo_list.model.dto.request.UpdateTodoDescriptionRequest
+import com.tradebyte.challenge.todo_list.model.dto.request.UpdateTodoStatusRequest
 import com.tradebyte.challenge.todo_list.model.dto.toDomain
 import com.tradebyte.challenge.todo_list.model.dto.toResponse
 import com.tradebyte.challenge.todo_list.service.TodoService
@@ -38,4 +39,14 @@ class TodoController(
         @Valid @RequestBody request: UpdateTodoDescriptionRequest
     ): TodoResponse =
         service.updateDescription(id, request.description).toResponse()
+
+    @PutMapping("/{id}/status")
+    override fun updateItemStatus(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: UpdateTodoStatusRequest
+    ): TodoResponse {
+        val targetStatus = request.status.toDomain()
+        val updatedItem = service.updateStatus(id, targetStatus)
+        return updatedItem.toResponse()
+    }
 }

@@ -1,4 +1,4 @@
-package com.tradebyte.challenge.todo_list.model.dto
+package com.tradebyte.challenge.todo_list.model.dto.request
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
