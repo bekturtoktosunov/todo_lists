@@ -128,6 +128,19 @@ class TodoServiceTest {
     }
 
     @Test
+    fun `should throw TodoItemNotModifiableException when updating item's description with pastDateTime in the past`() {
+        // Given
+        val itemEntity = buildNotDoneItemWithPastDueDateTime().toEntity()
+        val id = itemEntity.id
+        whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+
+        // When & Then
+        assertThrows(TodoItemNotModifiableException::class.java) {
+            service.updateDescription(id, "new description")
+        }
+    }
+
+    @Test
     fun `should mark NOT_DONE item to DONE and return result`() {
         // Given
         val itemEntity = buildValidNotDoneItem().toEntity()
@@ -190,9 +203,22 @@ class TodoServiceTest {
     }
 
     @Test
-    fun `should TodoItemNotModifiableException when updating item with state PAST_DUE`() {
+    fun `should throw TodoItemNotModifiableException when updating item's state with state PAST_DUE`() {
         // Given
         val itemEntity = buildPastDueItem().toEntity()
+        val id = itemEntity.id
+        whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+
+        // When & Then
+        assertThrows(TodoItemNotModifiableException::class.java) {
+            service.updateStatus(id, TodoItemStatus.DONE)
+        }
+    }
+
+    @Test
+    fun `should throw TodoItemNotModifiableException when updating item's state with pastDateTime in the past`() {
+        // Given
+        val itemEntity = buildNotDoneItemWithPastDueDateTime().toEntity()
         val id = itemEntity.id
         whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
 
@@ -234,7 +260,7 @@ class TodoServiceTest {
     @EnumSource(TodoItemStatus::class)
     fun `should return todo items matching given status`(status: TodoItemStatus) {
         // Given
-        val item = when(status) {
+        val item = when (status) {
             TodoItemStatus.DONE -> buildValidDoneItem()
             TodoItemStatus.NOT_DONE -> buildValidNotDoneItem()
             TodoItemStatus.PAST_DUE -> buildPastDueItem()

@@ -5,6 +5,7 @@ import com.tradebyte.challenge.todo_list.exception.TodoItemNotFoundException
 import com.tradebyte.challenge.todo_list.exception.TodoItemNotModifiableException
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
 import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
+import com.tradebyte.challenge.todo_list.model.entity.TodoItemEntity
 import com.tradebyte.challenge.todo_list.model.entity.toDomain
 import com.tradebyte.challenge.todo_list.model.entity.toEntity
 import com.tradebyte.challenge.todo_list.repository.TodoJpaRepository
@@ -54,9 +55,7 @@ class TodoService(
     fun updateDescription(id: UUID, newDescription: String): TodoItem {
         val itemEntity = repository.findByIdOrNull(id) ?: throw TodoItemNotFoundException(id)
 
-        if (!itemEntity.status.allowsModification()) {
-            throw TodoItemNotModifiableException(id, "status ${itemEntity.status} doesn't allow changes")
-        }
+        validateItemIsModifiable(itemEntity, id)
 
         itemEntity.description = newDescription
 
@@ -74,9 +73,7 @@ class TodoService(
     fun updateStatus(id: UUID, targetStatus: TodoItemStatus): TodoItem {
         val itemEntity = repository.findByIdOrNull(id) ?: throw TodoItemNotFoundException(id)
 
-        if (!itemEntity.status.allowsModification()) {
-            throw TodoItemNotModifiableException(id, "status ${itemEntity.status} doesn't allow changes")
-        }
+        validateItemIsModifiable(itemEntity, id)
 
         if (itemEntity.status == targetStatus) return itemEntity.toDomain()
 
@@ -89,6 +86,16 @@ class TodoService(
         itemEntity.doneDateTime = if (itemEntity.status == TodoItemStatus.DONE) clock.instant() else null
 
         return itemEntity.toDomain()
+    }
+
+    private fun validateItemIsModifiable(itemEntity: TodoItemEntity, id: UUID) {
+        val isPastDue = itemEntity.status == TodoItemStatus.NOT_DONE && itemEntity.dueDateTime < clock.instant()
+
+        if (!itemEntity.status.allowsModification()) {
+            throw TodoItemNotModifiableException(id, "status ${itemEntity.status} doesn't allow changes")
+        } else if (isPastDue) {
+            throw TodoItemNotModifiableException(id, "Item is past due and cannot be modified")
+        }
     }
 
     /**

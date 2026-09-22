@@ -20,6 +20,7 @@ import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.context.annotation.Import
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -66,7 +67,7 @@ class TodoControllerTest {
     }
 
     @Test
-    fun `should throw exception when description is blank`() {
+    fun `should return bad request when description is blank`() {
         // Given
         val request = buildCreateRequestWithBlankDescription()
 
@@ -83,7 +84,7 @@ class TodoControllerTest {
     }
 
     @Test
-    fun `should throw exception when description is too long`() {
+    fun `should return bad request when description is too long`() {
         // Given
         val request = buildCreateRequestWithTooLongDescription()
 
@@ -115,7 +116,7 @@ class TodoControllerTest {
     }
 
     @Test
-    fun `should throw exception when item not found`() {
+    fun `should return not found when item not found`() {
         // Given
         val id = UUID.randomUUID()
         whenever(service.find(id)).thenThrow(TodoItemNotFoundException(id))
@@ -151,7 +152,7 @@ class TodoControllerTest {
     }
 
     @Test
-    fun `should throw exception when description to update is blank`() {
+    fun `should return bad request when description to update is blank`() {
         // Given
         val id = UUID.randomUUID()
         val request = buildUpdateDescriptionRequestBlank()
@@ -169,7 +170,7 @@ class TodoControllerTest {
     }
 
     @Test
-    fun `should throw exception when description to update is too long`() {
+    fun `should return bad request when description to update is too long`() {
         // Given
         val id = UUID.randomUUID()
         val request = buildUpdateDescriptionRequestTooLong()
@@ -184,6 +185,30 @@ class TodoControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.error_code").value(ApiErrorCode.VALIDATION_FAILED.name))
             .andExpect(jsonPath("$.errors.description").exists())
+    }
+
+    @Test
+    fun `should return conflict when item was concurrently modified by description update`() {
+        // Given
+        val id = UUID.randomUUID()
+        val description = "Updated description"
+        val request = buildValidUpdateDescriptionRequest(description)
+
+        whenever(service.updateDescription(id, description))
+            .thenThrow(OptimisticLockingFailureException("Concurrent update"))
+
+        // When
+        mvc.perform(
+            patch("$BASE_URL/$id")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request)
+        ) // Then
+            .andExpect(status().isConflict)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.CONCURRENT_MODIFICATION.name))
+            .andExpect(jsonPath("$.timestamp").value(clock.instant().toString()))
+
+        verify(service).updateDescription(id, description)
     }
 
     @Test
@@ -297,6 +322,29 @@ class TodoControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.error_code").value(ApiErrorCode.TODO_ITEM_IMMUTABLE.name))
 
+    }
+
+    @Test
+    fun `should return conflict when item was concurrently modified by status update`() {
+        // Given
+        val id = UUID.randomUUID()
+        val request = buildValidUpdateStatusRequest(EditableTodoStatus.DONE)
+
+        whenever(service.updateStatus(id, TodoItemStatus.DONE))
+            .thenThrow(OptimisticLockingFailureException("Concurrent update"))
+
+        // When
+        mvc.perform(
+            put("$BASE_URL/$id/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request)
+        ) // Then
+            .andExpect(status().isConflict)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.CONCURRENT_MODIFICATION.name))
+            .andExpect(jsonPath("$.timestamp").value(clock.instant().toString()))
+
+        verify(service).updateStatus(id, TodoItemStatus.DONE)
     }
 
     @Test

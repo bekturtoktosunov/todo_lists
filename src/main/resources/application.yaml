@@ -16,3 +16,7 @@ spring:
   h2:
     console:
       enabled: true
+
+todo:
+  expiration:
+    delay-ms: 10000

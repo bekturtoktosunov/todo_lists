@@ -60,6 +60,16 @@ persist the change. This also leaves room for checking business rules before app
 Todo items use JPA optimistic locking via the @Version field to prevent lost updates when the same item is modified
 concurrently.
 
+#### Automatic Expiration
+
+I use a scheduled task to mark "not done" items with expired dueDateTime as "past due". The delay between executions is
+configurable via todo.expiration.delay-ms. Items are bulk updated within a transaction incrementing version
+to prevent concurrent updates.
+
+Read responses may temporarily show previous status until scheduled task runs. API update operations also check the
+due_datetime. Items marked as "done" do not expire. If an expired done item is marked as "not done", it expires on the
+next scheduled execution.
+
 ## Tech Stack
 
 | Language                 | Framework         | Database | API Docs             | Payload format | Container | Tests             |
