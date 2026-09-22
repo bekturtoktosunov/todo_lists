@@ -33,7 +33,7 @@ class OpenApiConfig {
                 .addResponses(
                     "BadRequest",
                     ApiResponse()
-                        .description("Validation error")
+                        .description("Request body is missing, malformed, or contains invalid values")
                         .content(
                             Content().addMediaType(
                                 "application/problem+json",

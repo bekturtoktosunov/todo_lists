@@ -1,4 +1,4 @@
-package com.tradebyte.challenge.todo_list.model.dto
+package com.tradebyte.challenge.todo_list.model.dto.response
 
 import com.fasterxml.jackson.annotation.JsonValue
 

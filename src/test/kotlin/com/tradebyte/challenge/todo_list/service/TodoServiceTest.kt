@@ -1,5 +1,6 @@
 package com.tradebyte.challenge.todo_list.service
 
+import com.tradebyte.challenge.todo_list.exception.InvalidTodoStatusTransitionException
 import com.tradebyte.challenge.todo_list.exception.TodoItemNotFoundException
 import com.tradebyte.challenge.todo_list.exception.TodoItemNotModifiableException
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
@@ -18,6 +19,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Optional
 import java.util.UUID
+import kotlin.jvm.java
 
 class TodoServiceTest {
 
@@ -122,8 +124,96 @@ class TodoServiceTest {
         }
     }
 
+    @Test
+    fun `should mark NOT_DONE item to DONE and return result`() {
+        // Given
+        val itemEntity = buildValidNotDoneItem().toEntity()
+        val id = itemEntity.id
+        whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+
+        // When
+        val result = service.updateStatus(id, TodoItemStatus.DONE)
+
+        // Then
+        assertEquals(id, result.id)
+        assertEquals(TodoItemStatus.DONE, result.status)
+        assertEquals(clock.instant(), result.doneDateTime)
+    }
+
+    @Test
+    fun `should mark DONE item to NOT_DONE and return result`() {
+        // Given
+        val itemEntity = buildValidDoneItem().toEntity()
+        val id = itemEntity.id
+        whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+
+        // When
+        val result = service.updateStatus(id, TodoItemStatus.NOT_DONE)
+
+        // Then
+        assertEquals(id, result.id)
+        assertEquals(TodoItemStatus.NOT_DONE, result.status)
+        assertNull(result.doneDateTime)
+    }
+
+    @Test
+    fun `should make no change when source status is target status`() {
+        // Given
+        val itemEntity = buildValidDoneItem().toEntity()
+        val id = itemEntity.id
+        val originalDoneDateTime = itemEntity.doneDateTime
+        whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+
+        // When
+        val result = service.updateStatus(id, TodoItemStatus.DONE)
+
+        // Then
+        assertEquals(id, result.id)
+        assertEquals(TodoItemStatus.DONE, result.status)
+        assertEquals(originalDoneDateTime, itemEntity.doneDateTime)
+        assertEquals(originalDoneDateTime, result.doneDateTime)
+    }
+
+    @Test
+    fun `should throw TodoItemNotFoundException when item not found by status update`() {
+        // Given
+        val id = UUID.randomUUID()
+        whenever(repository.findById(id)).thenReturn(Optional.empty())
+
+        // When & Then
+        assertThrows(TodoItemNotFoundException::class.java) {
+            service.updateStatus(id, TodoItemStatus.DONE)
+        }
+    }
+
+    @Test
+    fun `should TodoItemNotModifiableException when updating item with state PAST_DUE`() {
+        // Given
+        val itemEntity = buildPastDueItem().toEntity()
+        val id = itemEntity.id
+        whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+
+        // When & Then
+        assertThrows(TodoItemNotModifiableException::class.java) {
+            service.updateStatus(id, TodoItemStatus.DONE)
+        }
+    }
+
+    @Test
+    fun `should throw InvalidTodoStatusTransitionException when target update status is PAST_DUE`() {
+        // Given
+        val itemEntity = buildValidNotDoneItem().toEntity()
+        val id = itemEntity.id
+        whenever(repository.findById(id)).thenReturn(Optional.of(itemEntity))
+
+        // When & Then
+        assertThrows(InvalidTodoStatusTransitionException::class.java) {
+            service.updateStatus(id, TodoItemStatus.PAST_DUE)
+        }
+    }
+
     private fun buildValidNotDoneItem(): TodoItem {
-        val now = Instant.now(clock)
+        val now = clock.instant()
         return TodoItem(
             id = UUID.randomUUID(),
             description = "Some description",
@@ -134,7 +224,7 @@ class TodoServiceTest {
     }
 
     private fun buildNotDoneItemWithPastDueDateTime(): TodoItem {
-        val now = Instant.now(clock)
+        val now = clock.instant()
         return TodoItem(
             id = UUID.randomUUID(),
             description = "Some description",
@@ -144,8 +234,20 @@ class TodoServiceTest {
         )
     }
 
+    private fun buildValidDoneItem(): TodoItem {
+        val now = clock.instant()
+        return TodoItem(
+            id = UUID.randomUUID(),
+            description = "Some description",
+            status = TodoItemStatus.DONE,
+            creationDateTime = now.minus(2, ChronoUnit.DAYS),
+            doneDateTime = now.minus(1, ChronoUnit.DAYS),
+            dueDateTime = now.plus(1, ChronoUnit.DAYS),
+        )
+    }
+
     private fun buildPastDueItem(): TodoItem {
-        val now = Instant.now(clock)
+        val now = clock.instant()
         return TodoItem(
             id = UUID.randomUUID(),
             description = "Some description",

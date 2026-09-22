@@ -1,8 +1,10 @@
 package com.tradebyte.challenge.todo_list.service
 
+import com.tradebyte.challenge.todo_list.exception.InvalidTodoStatusTransitionException
 import com.tradebyte.challenge.todo_list.exception.TodoItemNotFoundException
 import com.tradebyte.challenge.todo_list.exception.TodoItemNotModifiableException
 import com.tradebyte.challenge.todo_list.model.domain.TodoItem
+import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
 import com.tradebyte.challenge.todo_list.model.entity.toDomain
 import com.tradebyte.challenge.todo_list.model.entity.toEntity
 import com.tradebyte.challenge.todo_list.repository.TodoJpaRepository
@@ -45,6 +47,7 @@ class TodoService(
     /**
      * Updates description of todo list item
      * Throws: TodoItemNotFoundException when no item with given id found
+     * Throws: TodoItemNotModifiableException when status forbids modifications (PAST_DUE)
      */
     @Transactional
     fun updateDescription(id: UUID, newDescription: String): TodoItem {
@@ -55,6 +58,34 @@ class TodoService(
         }
 
         itemEntity.description = newDescription
+
+        return itemEntity.toDomain()
+    }
+
+    /**
+     * Updates status of todo list item
+     * Returns item with no change if it's already in target status
+     * Throws: TodoItemNotFoundException when no item with given id found
+     * Throws: TodoItemNotModifiableException when status forbids modifications (PAST_DUE)
+     * Throws: InvalidTodoStatusTransitionException when source status cannot transition to target status
+     */
+    @Transactional
+    fun updateStatus(id: UUID, targetStatus: TodoItemStatus): TodoItem {
+        val itemEntity = repository.findByIdOrNull(id) ?: throw TodoItemNotFoundException(id)
+
+        if (!itemEntity.status.allowsModification()) {
+            throw TodoItemNotModifiableException(id, "status ${itemEntity.status} doesn't allow changes")
+        }
+
+        if (itemEntity.status == targetStatus) return itemEntity.toDomain()
+
+        if (!itemEntity.status.canTransitionByUserTo(targetStatus)) {
+            throw InvalidTodoStatusTransitionException(id, itemEntity.status, targetStatus)
+        }
+
+        itemEntity.status = targetStatus
+
+        itemEntity.doneDateTime = if (itemEntity.status == TodoItemStatus.DONE) clock.instant() else null
 
         return itemEntity.toDomain()
     }
