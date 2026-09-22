@@ -2,6 +2,21 @@
 
 ## Service description
 
+A RESTful service for managing to-do items, built with Kotlin and Spring Boot.
+
+The service supports:
+
+- Creating a todo item with a description and due date.
+- Updating an item's description.
+- Marking an item as done or not done.
+- Retrieving a single item.
+- Listing all items or filtering them by status.
+
+Items have one of three statuses: "not done", "done", or "past due".
+Expired not-done items are automatically marked as past due and cannot be modified through the API.
+
+The service uses an in-memory H2 database. Data is lost when the application stops.
+
 ### Design Decisions
 
 #### Separate API, Domain, and Persistence Models
@@ -26,8 +41,8 @@ clock to make time-dependent behavior deterministic.
 
 #### Lightweight State Machine
 
-I implemented a small State Machine in TodoItemStatus. It checks if a target state of an item is reachable from the
-current one (NOT_DONE, DONE, PAST_DUE).
+I implemented a small State Machine in TodoItemStatus for user-initiated status transitions. It checks if a target state
+of an item is reachable from the current one (NOT_DONE, DONE, PAST_DUE). Automatic expration is handled separately.
 
 #### Status Updates via PUT
 
@@ -64,7 +79,7 @@ concurrently.
 
 I use a scheduled task to mark "not done" items with expired dueDateTime as "past due". The delay between executions is
 configurable via todo.expiration.delay-ms. Items are bulk updated within a transaction incrementing version
-to prevent concurrent updates.
+to prevent stale updates from overwriting the expiration.
 
 Read responses may temporarily show previous status until scheduled task runs. API update operations also check the
 due_datetime. Items marked as "done" do not expire. If an expired done item is marked as "not done", it expires on the
@@ -81,13 +96,77 @@ The runtime image does not include source files or build tools. The application 
 
 | Language                 | Framework         | Database | API Docs             | Payload format | Container | Tests             |
 |--------------------------|-------------------|----------|----------------------|----------------|-----------|-------------------|
-| Kotlin  2.3.21 (Java 25) | Spring Boot 4.1.1 | H2       | OpenApi + Swagger UI | JSON           | Docker    | JUnit 5 + Mockito |
+| Kotlin  2.3.21 (Java 25) | Spring Boot 4.1.1 | H2       | OpenAPI + Swagger UI | JSON           | Docker    | JUnit 5 + Mockito |
 
 ## How-To Guides
 
+### Prerequisites
+
+For local builds and execution:
+
+- JDK 25
+- JAVA_HOME pointing to the JDK installation
+
+For Docker builds and execution:
+
+- Docker installed and running.
+- (On Windows) Docker Desktop configured to use Linux containers.
+
+The project includes the Gradle Wrapper.
+Docker builds do not require a local Java installation.
+
+Run all commands below from the project root.
+The first build requires internet access to download dependencies.
+
+The examples use `./gradlew` for Linux and macOS. On Windows PowerShell, replace it with `.\gradlew.bat`.
+
 ### Build service
 
+Build the application and run the tests:
+
+```bash
+./gradlew clean build
+```
+
+The executable JAR is generated at:
+
+```text
+build/libs/app.jar
+```
+
+To build only the executable JAR without running tests:
+
+```bash
+./gradlew bootJar
+```
+
+### Run locally
+
+Start the application using Gradle:
+
+```bash
+./gradlew bootRun
+```
+
+The application listens on port 8080 by default.
+Stop it with Ctrl+C.
+
 ### Run automatic tests
+
+Run all tests:
+
+```bash
+./gradlew test
+```
+
+The test suite includes service unit tests, controller tests, and repository integration tests
+using H2.
+
+The HTML test report is available at:
+
+```text
+build/reports/tests/test/index.html
+```
 
 ### Run using Docker
 
@@ -131,13 +210,18 @@ docker stop todo-list
 The service uses an in-memory H2 database. All data is lost when the application stops. The container is automatically
 removed after stopping, but the image remains available.
 
-### Check OpenApi / Swagger UI
+### Check OpenAPI / Swagger UI
 
 Swagger UI is available at http://localhost:8080/swagger-ui/index.html.
 
+OpenAPI JSON is available at http://localhost:8080/v3/api-docs
+
 ### Run API Quick Tests
 
-You can test the API using provided ./request.http file in IntelliJ or using curl like in the example below.
+You can test the API using provided ./request.http file in IntelliJ IDEA with HTTP Client support.
+Run the create-item request first, its response handler stores the item ID for following requests.
+
+Or you can test the API using curl like in the example below.
 
 ```bash
 curl --request POST 'http://localhost:8080/todo-list/v1/items' \
@@ -148,3 +232,29 @@ curl --request POST 'http://localhost:8080/todo-list/v1/items' \
 }'
 ```
 
+On Windows PowerShell:
+
+```powershell
+$body = @{
+    description = "Finish coding challenge"
+    due_datetime = (Get-Date).ToUniversalTime().AddDays(1).ToString("o")
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+    -Method Post `
+    -Uri "http://localhost:8080/todo-list/v1/items" `
+    -ContentType "application/json" `
+    -Body $body
+```
+
+List all items:
+
+```http
+GET /todo-list/v1/items
+```
+
+List only not-done items:
+
+```http
+GET /todo-list/v1/items?status=not%20done
+```
