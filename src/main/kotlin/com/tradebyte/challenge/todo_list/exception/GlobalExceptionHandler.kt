@@ -87,7 +87,7 @@ class GlobalExceptionHandler(private val clock: Clock) {
         problemDetail(
             status = HttpStatus.BAD_REQUEST,
             title = "Bad Request",
-            detail = "Request parameter is invalid ${exception.name}",
+            detail = "Request parameter is invalid (${exception.name}=${exception.value})",
             errorCode = ApiErrorCode.INVALID_REQUEST_PARAM
         )
 

@@ -38,6 +38,13 @@ The operation is idempotent: requesting the current status leaves the item uncha
 Marking an item as done sets done_datetime using the injected Clock; marking it as not done clears it.
 Items with status "past due" cannot be modified.
 
+#### Item Listing and Status Filtering
+
+I use GET /todo-list/v1/items with optional status query parameter. Without the parameter, all items are returned.
+
+Filtering and sorting are performed by the database. Items are ordered by creation_datetime and id to keep the order
+deterministic. When no items found empty array is returned with HTTP 200.
+
 #### Global Exception Handler
 
 I decided to add GlobalExceptionHandler to have custom exception structure (Problem Detail with extra properties)
