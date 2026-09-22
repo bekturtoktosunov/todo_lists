@@ -11,8 +11,10 @@ import com.tradebyte.challenge.todo_list.model.dto.toDomain
 import com.tradebyte.challenge.todo_list.service.TodoService
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
@@ -295,6 +297,92 @@ class TodoControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.error_code").value(ApiErrorCode.TODO_ITEM_IMMUTABLE.name))
 
+    }
+
+    @Test
+    fun `should return all items when no status given`() {
+        // Given
+        val notDoneItem = createMockedResponse()
+        val doneItem = createMockedResponse(status = TodoItemStatus.DONE, doneDateTime = clock.instant())
+        val items = listOf(notDoneItem, doneItem)
+        whenever(service.findAll(null)).thenReturn(items)
+
+        // When
+        mvc.perform(get(BASE_URL))
+            // Then
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].id").value(notDoneItem.id.toString()))
+            .andExpect(jsonPath("$[0].status").value("not done"))
+            .andExpect(jsonPath("$[1].id").value(doneItem.id.toString()))
+            .andExpect(jsonPath("$[1].status").value("done"))
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        "not done, NOT_DONE",
+        "done, DONE",
+        "past due, PAST_DUE"
+    )
+    fun `should return items matching status`(
+        apiStatus: String,
+        domainStatus: TodoItemStatus
+    ) {
+        // Given
+        val item =
+            createMockedResponse(
+                status = domainStatus,
+                doneDateTime = if (domainStatus == TodoItemStatus.DONE) clock.instant() else null,
+            )
+        whenever(service.findAll(domainStatus)).thenReturn(listOf(item))
+
+        // When
+        mvc.perform(
+            get(BASE_URL)
+                .param("status", apiStatus)
+        ) // Then
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].id").value(item.id.toString()))
+            .andExpect(jsonPath("$[0].status").value(apiStatus))
+    }
+
+    @Test
+    fun `should return empty array when no items found matching status`() {
+        // Given
+        val status = TodoItemStatus.NOT_DONE
+        whenever(service.findAll(status)).thenReturn(emptyList())
+
+        // When & Then
+        mvc.perform(
+            get(BASE_URL)
+                .param("status", "not done")
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().json("[]"))
+
+        verify(service).findAll(status)
+    }
+
+    @Test
+    fun `should return bad request when status filter is invalid`() {
+        // Given
+        val status = "unknown"
+
+        // When
+        mvc.perform(
+            get(BASE_URL)
+                .param("status", status)
+        ) // Then
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.INVALID_REQUEST_PARAM.name))
+            .andExpect(jsonPath("$.timestamp").value(clock.instant().toString()))
+
+        verifyNoInteractions(service)
     }
 
     private fun buildValidCreateRequest() =

@@ -72,3 +72,18 @@ Content-Type: application/json
 {
   "status": "not done"
 }
+
+### Get all items
+GET {{baseUrl}}/items
+
+### Get not done items
+GET {{baseUrl}}/items?status=not%20done
+
+### Get done items
+GET {{baseUrl}}/items?status=done
+
+### Get past due items
+GET {{baseUrl}}/items?status=past%20due
+
+### Get items with invalid status
+GET {{baseUrl}}/items?status=unknown

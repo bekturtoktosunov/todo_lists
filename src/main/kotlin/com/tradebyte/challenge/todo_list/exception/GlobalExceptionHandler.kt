@@ -7,6 +7,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import java.time.Clock
 
 @ControllerAdvice
@@ -79,6 +80,15 @@ class GlobalExceptionHandler(private val clock: Clock) {
             title = "Bad Request",
             detail = "Request body is missing or invalid",
             errorCode = ApiErrorCode.INVALID_REQUEST_BODY
+        )
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+    fun handleInvalidRequestParameter(exception: MethodArgumentTypeMismatchException): ProblemDetail =
+        problemDetail(
+            status = HttpStatus.BAD_REQUEST,
+            title = "Bad Request",
+            detail = "Request parameter is invalid (${exception.name}=${exception.value})",
+            errorCode = ApiErrorCode.INVALID_REQUEST_PARAM
         )
 
     private fun problemDetail(

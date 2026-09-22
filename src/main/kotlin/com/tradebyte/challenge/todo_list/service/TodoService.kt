@@ -8,6 +8,7 @@ import com.tradebyte.challenge.todo_list.model.domain.TodoItemStatus
 import com.tradebyte.challenge.todo_list.model.entity.toDomain
 import com.tradebyte.challenge.todo_list.model.entity.toEntity
 import com.tradebyte.challenge.todo_list.repository.TodoJpaRepository
+import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -88,5 +89,27 @@ class TodoService(
         itemEntity.doneDateTime = if (itemEntity.status == TodoItemStatus.DONE) clock.instant() else null
 
         return itemEntity.toDomain()
+    }
+
+    /**
+     * Finds existing todo items by status
+     * Returns all items if status is null
+     * Returns empty List if no items found
+     */
+    fun findAll(status: TodoItemStatus?): List<TodoItem> {
+        val sort =
+            Sort.by(
+                Sort.Order.asc("creationDateTime"),
+                Sort.Order.asc("id")
+            )
+
+        val items =
+            if (status == null) {
+                repository.findAll(sort)
+            } else {
+                repository.findAllByStatus(status, sort)
+            }
+
+        return items.map { item -> item.toDomain() }
     }
 }

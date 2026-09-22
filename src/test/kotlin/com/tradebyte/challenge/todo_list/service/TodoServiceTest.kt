@@ -9,10 +9,13 @@ import com.tradebyte.challenge.todo_list.model.entity.toEntity
 import com.tradebyte.challenge.todo_list.repository.TodoJpaRepository
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.data.domain.Sort
 import java.time.ZoneOffset
 import java.time.Clock
 import java.time.Instant
@@ -212,6 +215,69 @@ class TodoServiceTest {
         }
     }
 
+    @Test
+    fun `should return all todo items when status filter is null`() {
+        // Given
+        val items = buildValidItems()
+        val entities = items.map { it.toEntity() }
+        whenever(repository.findAll(DEFAULT_SORT)).thenReturn(entities)
+
+        // When
+        val result = service.findAll(null)
+
+        // Then
+        assertEquals(items, result)
+        verify(repository).findAll(DEFAULT_SORT)
+    }
+
+    @ParameterizedTest
+    @EnumSource(TodoItemStatus::class)
+    fun `should return todo items matching given status`(status: TodoItemStatus) {
+        // Given
+        val item = when(status) {
+            TodoItemStatus.DONE -> buildValidDoneItem()
+            TodoItemStatus.NOT_DONE -> buildValidNotDoneItem()
+            TodoItemStatus.PAST_DUE -> buildPastDueItem()
+        }
+        val items = listOf(item)
+        val entities = items.map { it.toEntity() }
+        whenever(repository.findAllByStatus(status, DEFAULT_SORT)).thenReturn(entities)
+
+        // When
+        val result = service.findAll(status)
+
+        // Then
+        assertEquals(items, result)
+        verify(repository).findAllByStatus(status, DEFAULT_SORT)
+    }
+
+    @Test
+    fun `should return empty list when no items exist`() {
+        // Given
+        whenever(repository.findAll(DEFAULT_SORT)).thenReturn(emptyList())
+
+        // When
+        val result = service.findAll(null)
+
+        // Then
+        assertTrue(result.isEmpty())
+        verify(repository).findAll(DEFAULT_SORT)
+    }
+
+    @Test
+    fun `should return empty list when no items found for matching status`() {
+        // Given
+        val status = TodoItemStatus.DONE
+        whenever(repository.findAllByStatus(status, DEFAULT_SORT)).thenReturn(emptyList())
+
+        // When
+        val result = service.findAll(status)
+
+        // Then
+        assertTrue(result.isEmpty())
+        verify(repository).findAllByStatus(status, DEFAULT_SORT)
+    }
+
     private fun buildValidNotDoneItem(): TodoItem {
         val now = clock.instant()
         return TodoItem(
@@ -257,8 +323,23 @@ class TodoServiceTest {
         )
     }
 
+    private fun buildValidItems(): List<TodoItem> =
+        listOf(
+            buildValidDoneItem(),
+            buildValidNotDoneItem(),
+            buildPastDueItem()
+        )
+
     private fun fixedClock(): Clock {
         val fixedInstant = Instant.parse("2026-09-20T00:00:00Z")
         return Clock.fixed(fixedInstant, ZoneOffset.UTC)
+    }
+
+    companion object {
+        val DEFAULT_SORT =
+            Sort.by(
+                Sort.Order.asc("creationDateTime"),
+                Sort.Order.asc("id")
+            )
     }
 }
