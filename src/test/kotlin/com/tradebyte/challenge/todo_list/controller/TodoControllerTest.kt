@@ -378,6 +378,9 @@ class TodoControllerTest {
                 .param("status", status)
         ) // Then
             .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.error_code").value(ApiErrorCode.INVALID_REQUEST_PARAM.name))
+            .andExpect(jsonPath("$.timestamp").value(clock.instant().toString()))
 
         verifyNoInteractions(service)
     }
