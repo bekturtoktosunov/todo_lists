@@ -91,8 +91,10 @@ class TodoService(
     private fun validateItemIsModifiable(itemEntity: TodoItemEntity, id: UUID) {
         val isPastDue = itemEntity.status == TodoItemStatus.NOT_DONE && itemEntity.dueDateTime < clock.instant()
 
-        if (!itemEntity.status.allowsModification() || isPastDue) {
+        if (!itemEntity.status.allowsModification()) {
             throw TodoItemNotModifiableException(id, "status ${itemEntity.status} doesn't allow changes")
+        } else if (isPastDue) {
+            throw TodoItemNotModifiableException(id, "Item is past due and cannot be modified")
         }
     }
 
