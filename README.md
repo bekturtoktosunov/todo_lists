@@ -258,3 +258,24 @@ List only not-done items:
 ```http
 GET /todo-list/v1/items?status=not%20done
 ```
+
+### Check Code Style
+
+The project uses ktlint to check Kotlin source files and Gradle Kotlin scripts.
+Formatting settings are defined in .editorconfig.
+
+Check formatting without modifying files:
+
+```bash
+./gradlew ktlintCheck
+```
+
+Automatically fix supported formatting issues:
+
+```bash
+./gradlew ktlintFormat
+```
+
+Some violations require manual changes. Run ktlintCheck after formatting to verify the result.
+
+On Windows PowerShell, use .\gradlew.bat instead of ./gradlew.
