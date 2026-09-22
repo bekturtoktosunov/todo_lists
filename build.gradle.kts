@@ -56,3 +56,7 @@ tasks.withType<Test> {
 tasks.test {
     jvmArgs("-javaagent:${classpath.find { it.name.contains("mockito-core") }?.absolutePath}")
 }
+
+tasks.bootJar {
+    archiveFileName.set("app.jar")
+}
