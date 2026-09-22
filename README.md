@@ -70,6 +70,13 @@ Read responses may temporarily show previous status until scheduled task runs. A
 due_datetime. Items marked as "done" do not expire. If an expired done item is marked as "not done", it expires on the
 next scheduled execution.
 
+#### Docker Build
+
+I use a multi-stage Docker build: JDK 25 compiles the application using the Gradle Wrapper, and JRE 25 runs the
+resulting executable JAR.
+
+The runtime image does not include source files or build tools. The application runs as a non-root user.
+
 ## Tech Stack
 
 | Language                 | Framework         | Database | API Docs             | Payload format | Container | Tests             |
@@ -78,12 +85,57 @@ next scheduled execution.
 
 ## How-To Guides
 
-### OpenApi / Swagger UI
+### Build service
 
-You can reach the OpenApi documentation via web browser opening the following URL:
-http://localhost:8080/swagger-ui/index.html
+### Run automatic tests
 
-### API Quick Tests
+### Run using Docker
+
+Docker must be installed and running. On Windows, use Docker Desktop in Linux containers mode. A local Java or Gradle
+installation is not required.
+
+Run the following commands from the project root.
+
+1. Build the image:
+
+```bash
+docker build -t todo-list:local .
+```
+
+The image is built from source using the Gradle Wrapper. The first build requires internet access to download base
+images and dependencies. Tests are not executed during the Docker build.
+
+2. Start the container:
+
+```bash
+docker run --rm --name todo-list -p 127.0.0.1:8080:8080 todo-list:local
+```
+
+The API is available at http://localhost:8080/todo-list/v1/items.
+Swagger UI is available at http://localhost:8080/swagger-ui/index.html.
+
+If port 8080 is already in use, map a different local port:
+
+```bash
+docker run --rm --name todo-list -p 127.0.0.1:8081:8080 todo-list:local
+```
+
+In this case, use port 8081 in the URLs above.
+
+3. Stop the container from another terminal:
+
+```bash
+docker stop todo-list
+```
+
+The service uses an in-memory H2 database. All data is lost when the application stops. The container is automatically
+removed after stopping, but the image remains available.
+
+### Check OpenApi / Swagger UI
+
+Swagger UI is available at http://localhost:8080/swagger-ui/index.html.
+
+### Run API Quick Tests
 
 You can test the API using provided ./request.http file in IntelliJ or using curl like in the example below.
 
