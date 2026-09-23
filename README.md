@@ -1,4 +1,4 @@
-# TRADEBYTE CODING CHALLENGE
+# CODING CHALLENGE
 
 ## Service description
 
